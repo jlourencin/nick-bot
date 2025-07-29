@@ -113,6 +113,18 @@ def monitor():
 
 # === EXECUÇÃO ===
 if __name__ == "__main__":
+        # TESTE MANUAL (executa só uma vez quando roda o script)
+    print("🧪 Teste manual de notificação")
+    old_test = ["Ichigo", "Rukia", "Renji"]
+    new_test = ["Ichigo", "Rukia", "Grimmjow"]
+    send_discord_notification(old_test, new_test)
+
+    # Inicia o monitoramento em segundo plano
+    t = threading.Thread(target=monitor)
+    t.daemon = True
+    t.start()
+
+    app.run(host="0.0.0.0", port=8080)
     t = threading.Thread(target=monitor)
     t.daemon = True
     t.start()
