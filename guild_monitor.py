@@ -7,7 +7,7 @@ import os
 import json
 
 # === CONFIGURAÇÕES ===
-DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")  # Webhook do Discord
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")  # webhook do Discord via Environment
 CHECK_INTERVAL = 60  # segundos
 STATE_FILE = "last_members.json"
 GUILD_URL = "https://bleachgame.online/?guilds/Cw+Bagda"
@@ -48,24 +48,29 @@ def send_discord_notification(old_list, new_list):
     removidos = old_set - new_set
     adicionados = new_set - old_set
 
-    if not removidos and not adicionados:
-        return
-
     fields = []
 
     if removidos:
-        fields.append({
-            "name": "❌ Removidos",
-            "value": "\n".join(removidos),
-            "inline": False
-        })
+        removidos_txt = "\n".join(removidos).strip()
+        if removidos_txt:
+            fields.append({
+                "name": "❌ Removidos",
+                "value": removidos_txt,
+                "inline": False
+            })
 
     if adicionados:
-        fields.append({
-            "name": "✅ Adicionados",
-            "value": "\n".join(adicionados),
-            "inline": False
-        })
+        adicionados_txt = "\n".join(adicionados).strip()
+        if adicionados_txt:
+            fields.append({
+                "name": "✅ Adicionados",
+                "value": adicionados_txt,
+                "inline": False
+            })
+
+    if not fields:
+        print("⚠️ Alterações vazias. Nenhuma notificação será enviada.")
+        return
 
     embed = {
         "title": "📢 ALTERAÇÃO NA GUILD DETECTADA",
@@ -89,23 +94,16 @@ def send_discord_notification(old_list, new_list):
 
 def load_last_members():
     if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"[ERRO] Falha ao carregar arquivo de estado: {e}")
-            return []
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
     else:
         return []
 
 def save_last_members(members):
-    try:
-        with open(STATE_FILE, "w") as f:
-            json.dump(members, f)
-    except Exception as e:
-        print(f"[ERRO] Falha ao salvar estado: {e}")
+    with open(STATE_FILE, "w") as f:
+        json.dump(members, f)
 
-def monitor_guild():
+def monitor():
     last_members = load_last_members()
 
     while True:
@@ -113,20 +111,20 @@ def monitor_guild():
         current_members = get_guild_members()
 
         if current_members:
-            if set(current_members) != set(last_members):
+            if current_members != last_members:
                 send_discord_notification(last_members, current_members)
                 save_last_members(current_members)
             else:
-                print("✅ Nenhuma alteração detectada.")
+                print("✅ Nenhuma mudança detectada.")
         else:
-            print("⚠️ Lista atual de membros vazia ou não carregada.")
+            print("⚠️ Nenhum membro encontrado ou erro na leitura.")
 
         print(f"⏳ Aguardando {CHECK_INTERVAL} segundos...\n")
         time.sleep(CHECK_INTERVAL)
 
 # === EXECUÇÃO ===
 if __name__ == "__main__":
-    t = threading.Thread(target=monitor_guild)
+    t = threading.Thread(target=monitor)
     t.daemon = True
     t.start()
 
