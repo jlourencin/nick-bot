@@ -7,7 +7,7 @@ import os
 import json
 
 # === CONFIGURAÇÕES ===
-DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")  # webhook do Discord
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")  # variáveis devem ser configuradas no Railway
 CHECK_INTERVAL = 60  # segundos
 STATE_FILE = "last_members.json"
 GUILD_URL = "https://bleachgame.online/?guilds/Cw+Bagda"
@@ -50,28 +50,7 @@ def send_discord_notification(old_list, new_list):
 
     if removidos or adicionados:
         embed = {
-            "title": "📢 ATENÇÃO! ALGUM NOOB MUDOU O NICK",
-            "description": "NÃO ADIANTA CORRER, VAMOS CONTINUAR OPRIMINDO VOCÊ, SEU NOOBZINHO",
+            "title": "📢 ATENÇÃO! ALTERAÇÃO NA GUILD DETECTADA",
+            "description": "Algum personagem foi removido ou entrou na guild!",
             "color": 0x3498db,
             "fields": [],
-            "footer": {"text": "💩 NOOBS MEDROSOS"}
-        }
-
-        if removidos:
-            embed["fields"].append({
-                "name": "❌ Removidos",
-                "value": "\n".join(removidos),
-                "inline": False
-            })
-
-        if adicionados:
-            embed["fields"].append({
-                "name": "✅ Adicionados",
-                "value": "\n".join(adicionados),
-                "inline": False
-            })
-
-        payload = {"embeds": [embed]}
-        try:
-            resp = requests.post(DISCORD_WEBHOOK, json=payload)
-            if resp.status_code not_
