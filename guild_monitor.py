@@ -64,15 +64,15 @@ def send_discord_notification(old_list, new_list):
 
     embed = {
             "title": "📢 ATENÇÃO! ALGUM NOOB MUDOU O NICK",
-            "description": "NÃO ADIANTA CORRER, VAMOS CONTINUAR OPRIMINDO VOCÊ, SEU NOOBZINHO",
-            "color": 0x00ff00,
+            "description": "NÃO ADIANTA CORRER 🤣 ",
+            "color": 0xff0000,
             "fields": [],
             "footer": {"text": "🔥 JOHTTO HACKER DEUS"}
     }
 
     if removidos:
         embed["fields"].append({
-            "name": "❌ Nick antig",
+            "name": "❌ Nick antigo",
             "value": "\n".join(removidos),
             "inline": False
         })
@@ -113,8 +113,8 @@ def monitor():
 if __name__ == "__main__":
     # TESTE MANUAL (executa só uma vez quando roda o script)
     print("🧪 Teste manual de notificação")
-    old_test = ["Ichigo", "Rukia", "Renji"]
-    new_test = ["Ichigo", "Rukia", "Grimmjow"]
+    old_test = ["PSYCHOO NOOB"]
+    new_test = ["PSYCHO NOOBASSO"]
     send_discord_notification(old_test, new_test)
 
     # Inicia o monitoramento em segundo plano
