@@ -7,7 +7,7 @@ import os
 import json
 
 # === CONFIGURAÇÕES ===
-DISCORD_WEBHOOK = os.environ.get("https://discord.com/api/webhooks/1399578365073297418/KziH0IYXYPvG0hIv0itHYjutg_D_mHvL_3zflD4lasdnw3lOwgZJmjJajeI9HeJx0d6E)  # webhook do Discord
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")  # webhook do Discord
 CHECK_INTERVAL = 60  # segundos
 STATE_FILE = "last_members.json"
 GUILD_URL = "https://bleachgame.online/?guilds/Cw+Bagda"
