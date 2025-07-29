@@ -7,12 +7,12 @@ import os
 import json
 
 # === CONFIGURAÇÕES ===
-DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")  # variáveis devem ser configuradas no Railway
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")  # webhook do Discord via variável de ambiente
 CHECK_INTERVAL = 60  # segundos
 STATE_FILE = "last_members.json"
 GUILD_URL = "https://bleachgame.online/?guilds/Cw+Bagda"
 
-# === SERVIDOR FLASK ===
+# === SERVIDOR FLASK PARA MANTER ONLINE ===
 app = Flask(__name__)
 
 @app.route('/')
@@ -50,7 +50,74 @@ def send_discord_notification(old_list, new_list):
 
     if removidos or adicionados:
         embed = {
-            "title": "📢 ATENÇÃO! ALTERAÇÃO NA GUILD DETECTADA",
-            "description": "Algum personagem foi removido ou entrou na guild!",
-            "color": 0x3498db,
+            "title": "📢 ATENÇÃO! ALGUM NOOB MUDOU DE NICK 🤣",
+            "description": "💩 Não adianta correr noob",
+            "color": 3447003,
             "fields": [],
+            "footer": {
+                "text": "🔪 Vamos oprimir sempre!"
+            }
+        }
+
+        if removidos:
+            embed["fields"].append({
+                "name": "❌ Nicks antigos",
+                "value": "\n".join(removidos),
+                "inline": False
+            })
+
+        if adicionados:
+            embed["fields"].append({
+                "name": "✅ Nicks novos",
+                "value": "\n".join(adicionados),
+                "inline": False
+            })
+
+        payload = {
+            "embeds": [embed]
+        }
+
+        try:
+            resp = requests.post(DISCORD_WEBHOOK, json=payload)
+            if resp.status_code not in [200, 204]:
+                print(f"[ERRO] Webhook falhou com status {resp.status_code}")
+                print(f"[RESPOSTA] {resp.text}")
+            else:
+                print("[OK] Notificação enviada ao Discord.")
+        except Exception as e:
+            print(f"[ERRO] Falha ao enviar notificação ao Discord: {e}")
+
+def load_last_members():
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    else:
+        return []
+
+def save_last_members(members):
+    with open(STATE_FILE, "w") as f:
+        json.dump(members, f)
+
+def monitor():
+    last_members = load_last_members()
+
+    while True:
+        print("🔍 Verificando membros da guild...")
+        current_members = get_guild_members()
+
+        if current_members:
+            send_discord_notification(last_members, current_members)
+            save_last_members(current_members)
+        else:
+            print("⚠️ Nenhum dado recebido da guild. Ignorando rodada.")
+
+        print(f"⏳ Aguardando {CHECK_INTERVAL} segundos...\n")
+        time.sleep(CHECK_INTERVAL)
+
+# === EXECUÇÃO ===
+if __name__ == "__main__":
+    t = threading.Thread(target=monitor)
+    t.daemon = True
+    t.start()
+
+    app.run(host="0.0.0.0", port=8080)
