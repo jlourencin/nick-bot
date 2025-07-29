@@ -7,8 +7,8 @@ import os
 import json
 
 # === CONFIGURAÇÕES ===
-DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")  # webhook do Discord via Environment
-CHECK_INTERVAL = 60  # segundos
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")  # webhook do Discord
+CHECK_INTERVAL = 300  # segundos (5 minutos para evitar rate limit)
 STATE_FILE = "last_members.json"
 GUILD_URL = "https://bleachgame.online/?guilds/Cw+Bagda"
 
@@ -48,56 +48,50 @@ def send_discord_notification(old_list, new_list):
     removidos = old_set - new_set
     adicionados = new_set - old_set
 
-    fields = []
+    if removidos or adicionados:
+        embed = {
+            "title": "📢 ATENÇÃO! ALGUM NOOB MUDOU O NICK",
+            "description": "NÃO ADIANTA CORRER, VAMOS CONTINUAR OPRIMINDO VOCÊ, SEU NOOBZINHO",
+            "color": 0x3498db,
+            "fields": [],
+            "footer": {"text": "💩 NOOBS MEDROSOS"}
+        }
 
-    if removidos:
-        removidos_txt = "\n".join(removidos).strip()
-        if removidos_txt:
-            fields.append({
+        if removidos:
+            embed["fields"].append({
                 "name": "❌ Removidos",
-                "value": removidos_txt,
+                "value": "\n".join(removidos),
                 "inline": False
             })
 
-    if adicionados:
-        adicionados_txt = "\n".join(adicionados).strip()
-        if adicionados_txt:
-            fields.append({
+        if adicionados:
+            embed["fields"].append({
                 "name": "✅ Adicionados",
-                "value": adicionados_txt,
+                "value": "\n".join(adicionados),
                 "inline": False
             })
 
-    if not fields:
-        print("⚠️ Alterações vazias. Nenhuma notificação será enviada.")
-        return
+        payload = {"embeds": [embed]}
+        try:
+            resp = requests.post(DISCORD_WEBHOOK, json=payload)
+            if resp.status_code == 429:
+                retry_after = int(resp.headers.get("Retry-After", "10"))
+                print(f"[AVISO] Rate limit. Aguardando {retry_after} segundos...")
+                time.sleep(retry_after + 1)
+            elif resp.status_code not in [200, 204]:
+                print(f"[ERRO] Webhook falhou com status {resp.status_code}")
+                print(f"[RESPOSTA] {resp.text}")
+            else:
+                print("[OK] Notificação enviada ao Discord.")
+        except Exception as e:
+            print(f"[ERRO] Falha ao enviar notificação ao Discord: {e}")
 
-    embed = {
-        "title": "📢 ALTERAÇÃO NA GUILD DETECTADA",
-        "description": "Algum noob mudou de nick na guild Cw Bagda!",
-        "color": 0x00ff00,
-        "fields": fields,
-        "footer": {"text": "💩 NOOBS MEDROSOS"}
-    }
-
-    payload = {"embeds": [embed]}
-
-    try:
-        resp = requests.post(DISCORD_WEBHOOK, json=payload)
-        if resp.status_code not in [200, 204]:
-            print(f"[ERRO] Webhook falhou com status {resp.status_code}")
-            print(f"[RESPOSTA] {resp.text}")
-        else:
-            print("[OK] Notificação enviada ao Discord.")
-    except Exception as e:
-        print(f"[ERRO] Falha ao enviar notificação ao Discord: {e}")
 
 def load_last_members():
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, "r") as f:
             return json.load(f)
-    else:
-        return []
+    return []
 
 def save_last_members(members):
     with open(STATE_FILE, "w") as f:
@@ -111,13 +105,8 @@ def monitor():
         current_members = get_guild_members()
 
         if current_members:
-            if current_members != last_members:
-                send_discord_notification(last_members, current_members)
-                save_last_members(current_members)
-            else:
-                print("✅ Nenhuma mudança detectada.")
-        else:
-            print("⚠️ Nenhum membro encontrado ou erro na leitura.")
+            send_discord_notification(last_members, current_members)
+            save_last_members(current_members)
 
         print(f"⏳ Aguardando {CHECK_INTERVAL} segundos...\n")
         time.sleep(CHECK_INTERVAL)
@@ -127,5 +116,4 @@ if __name__ == "__main__":
     t = threading.Thread(target=monitor)
     t.daemon = True
     t.start()
-
     app.run(host="0.0.0.0", port=8080)
