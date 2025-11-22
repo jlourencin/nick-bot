@@ -9,8 +9,21 @@ import json
 # === CONFIGURAÇÕES ===
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")  # deve ser definido nas variáveis de ambiente
 CHECK_INTERVAL = 60  # segundos
-STATE_FILE = "last_members.json"
-GUILD_URL = "https://bleachgame.online/?guilds/Cw+Bagda"
+
+# Lista de guilds a serem monitoradas
+# ➜ TROQUE "NOME DA OUTRA GUILD" E A URL PELA SUA SEGUNDA GUILD
+GUILDS = [
+    {
+        "name": "Cw Bate Em Tanso",
+        "url": "https://bleachgame.online/?guilds/Cw+Bate+Em+Tanso",
+        "state_file": "last_members_cw_bate_em_tanso.json"
+    },
+    {
+        "name": "ARMAGEDOM",
+        "url": "https://bleachgame.online/?guilds/ARMAGEDOM",
+        "state_file": "last_members_armagedom.json"
+    },
+]
 
 # === FLASK APP PARA MANTER ONLINE ===
 app = Flask(__name__)
